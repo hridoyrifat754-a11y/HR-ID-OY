@@ -1,0 +1,42 @@
+{
+  "id": "/",
+  "name": "আলম খান",
+  "short_name": "আলম খান",
+  "description": "আলম খান · কর্তৃপক্ষ: হৃদয় · ২য়–৭ম তলার ৩৫টি রুমের ভাড়া ও ডাইনিং সাব-মিটার বিদ্যুৎ হিসাব",
+  "lang": "bn",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#064e3b",
+  "prefer_related_applications": false,
+  "categories": ["utilities", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/aistudio/Gemini_Generated_Image_dh5p3odh5p3odh5p_10534da2.jpeg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

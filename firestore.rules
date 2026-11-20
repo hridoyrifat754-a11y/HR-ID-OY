@@ -1,0 +1,440 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all rule
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidRoomId(id) {
+      return id is string && id.size() >= 6 && id.size() <= 32 && id.matches('^room-[0-9]+$');
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'hridoyrifat754@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() ||
+        (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function hasTenantProfile() {
+      return isVerifiedUser() && exists(/databases/$(database)/documents/tenantUsers/$(request.auth.uid));
+    }
+
+    function getTenantUser() {
+      return get(/databases/$(database)/documents/tenantUsers/$(request.auth.uid)).data;
+    }
+
+    function isApprovedTenantForRoom(roomNo) {
+      return hasTenantProfile() &&
+        getTenantUser().approved == true &&
+        getTenantUser().status == 'approved' &&
+        getTenantUser().roomNo == roomNo;
+    }
+
+    // --- Validation Blueprints ---
+    function isValidBuilding(data) {
+      return data.keys().hasAll([
+          'id', 'buildingName', 'landlordName', 'landlordPhone', 'defaultUnitRate', 'useBengaliDigits'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'buildingName', 'buildingAddress', 'landlordName', 'landlordTitle',
+          'landlordPhone', 'bkashNumber', 'nagadNumber', 'defaultUnitRate',
+          'useBengaliDigits', 'ownerEmail', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() <= 64 &&
+        data.buildingName is string && data.buildingName.size() <= 120 &&
+        (!('buildingAddress' in data) || (data.buildingAddress is string && data.buildingAddress.size() <= 200)) &&
+        data.landlordName is string && data.landlordName.size() <= 80 &&
+        (!('landlordTitle' in data) || (data.landlordTitle is string && data.landlordTitle.size() <= 60)) &&
+        data.landlordPhone is string && data.landlordPhone.size() <= 60 &&
+        (!('bkashNumber' in data) || (data.bkashNumber is string && data.bkashNumber.size() <= 40)) &&
+        (!('nagadNumber' in data) || (data.nagadNumber is string && data.nagadNumber.size() <= 40)) &&
+        data.defaultUnitRate is number && data.defaultUnitRate >= 0 && data.defaultUnitRate <= 1000 &&
+        data.useBengaliDigits is bool &&
+        (!('ownerEmail' in data) || (data.ownerEmail is string && data.ownerEmail.size() <= 120)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
+    function isValidRoom(data) {
+      return data.keys().hasAll(['id', 'no', 'floor', 'name', 'phone', 'rent', 'rate', 'isOccupied']) &&
+        data.keys().hasOnly([
+          'id', 'no', 'floor', 'name', 'phone', 'rent', 'rate', 'isOccupied', 'notes', 'tenantUid', 'updatedAt'
+        ]) &&
+        isValidRoomId(data.id) &&
+        data.no is int && data.no >= 1 && data.no <= 35 &&
+        data.floor is int && data.floor >= 1 && data.floor <= 20 &&
+        data.name is string && data.name.size() <= 120 &&
+        data.phone is string && data.phone.size() <= 40 &&
+        data.rent is number && data.rent >= 0 &&
+        data.rate is number && data.rate >= 0 &&
+        data.isOccupied is bool &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+        (!('tenantUid' in data) || (data.tenantUid is string && data.tenantUid.size() <= 128)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
+    function isValidRoomDirectory(data) {
+      return data.keys().hasAll(['id', 'no', 'floor', 'displayName', 'isOccupied']) &&
+        data.keys().hasOnly(['id', 'no', 'floor', 'displayName', 'isOccupied', 'updatedAt']) &&
+        isValidRoomId(data.id) &&
+        data.no is int && data.no >= 1 && data.no <= 35 &&
+        data.floor is int && data.floor >= 1 && data.floor <= 20 &&
+        data.displayName is string && data.displayName.size() <= 120 &&
+        data.isOccupied is bool &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
+    function isValidSharedMeter(data) {
+      return data.keys().hasAll([
+          'id', 'groupIndex', 'groupName', 'rooms', 'month', 'prev', 'now',
+          'units', 'rate', 'amount', 'perRoomShare', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'groupIndex', 'groupName', 'rooms', 'month', 'prev', 'now',
+          'units', 'rate', 'amount', 'perRoomShare', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.groupIndex is int && data.groupIndex >= 1 && data.groupIndex <= 50 &&
+        data.groupName is string && data.groupName.size() <= 120 &&
+        data.rooms is list && data.rooms.size() >= 1 && data.rooms.size() <= 35 && data.rooms[0] is int &&
+        data.month is string && data.month.size() <= 16 && data.month.matches('^[0-9]{4}-[0-9]{2}$') &&
+        data.prev is number && data.prev >= 0 &&
+        data.now is number && data.now >= 0 &&
+        data.units is number && data.units >= 0 &&
+        data.rate is number && data.rate >= 0 &&
+        data.amount is number && data.amount >= 0 &&
+        data.perRoomShare is number && data.perRoomShare >= 0 &&
+        data.createdAt is string && data.createdAt.size() <= 40 &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
+    function isValidBill(data) {
+      return data.keys().hasAll([
+          'id', 'roomId', 'roomNo', 'floor', 'tenantName', 'tenantPhone', 'month',
+          'prev', 'now', 'units', 'rate', 'electricityCost', 'rent',
+          'sharedElectricity', 'other', 'note', 'total', 'paid', 'due', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'roomId', 'roomNo', 'floor', 'tenantName', 'tenantPhone', 'tenantUid', 'month',
+          'prev', 'now', 'units', 'rate', 'electricityCost', 'rent',
+          'sharedElectricity', 'other', 'note', 'total', 'paid', 'due',
+          'paymentMethod', 'trxId', 'unitGroupId', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.roomId is string && data.roomId.size() <= 32 &&
+        data.roomNo is int && data.roomNo >= 1 && data.roomNo <= 35 &&
+        data.floor is int && data.floor >= 1 && data.floor <= 20 &&
+        data.tenantName is string && data.tenantName.size() <= 120 &&
+        data.tenantPhone is string && data.tenantPhone.size() <= 40 &&
+        (!('tenantUid' in data) || (data.tenantUid is string && data.tenantUid.size() <= 128)) &&
+        data.month is string && data.month.size() <= 16 && data.month.matches('^[0-9]{4}-[0-9]{2}$') &&
+        data.prev is number && data.prev >= 0 &&
+        data.now is number && data.now >= 0 &&
+        data.units is number && data.units >= 0 &&
+        data.rate is number && data.rate >= 0 &&
+        data.electricityCost is number && data.electricityCost >= 0 &&
+        data.rent is number && data.rent >= 0 &&
+        data.sharedElectricity is number && data.sharedElectricity >= 0 &&
+        data.other is number && data.other >= 0 &&
+        data.note is string && data.note.size() <= 200 &&
+        data.total is number && data.total >= 0 &&
+        data.paid is number && data.paid >= 0 &&
+        data.due is number && data.due >= 0 &&
+        (!('paymentMethod' in data) || (data.paymentMethod is string && data.paymentMethod.size() <= 40)) &&
+        (!('trxId' in data) || (data.trxId is string && data.trxId.size() <= 80)) &&
+        (!('unitGroupId' in data) || (data.unitGroupId is string && data.unitGroupId.size() <= 40)) &&
+        data.createdAt is string && data.createdAt.size() <= 40 &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 40));
+    }
+
+    function isValidPayment(data) {
+      return data.keys().hasAll([
+          'id', 'roomNo', 'roomId', 'tenantName', 'month', 'amount', 'paymentType', 'method', 'status', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'roomNo', 'roomId', 'tenantName', 'tenantUid', 'month', 'amount',
+          'paymentType', 'method', 'trxId', 'senderPhone', 'note', 'status', 'createdAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.roomNo is int && data.roomNo >= 1 && data.roomNo <= 35 &&
+        data.roomId is string && data.roomId.size() <= 32 &&
+        data.tenantName is string && data.tenantName.size() <= 120 &&
+        (!('tenantUid' in data) || (data.tenantUid is string && data.tenantUid.size() <= 128)) &&
+        data.month is string && data.month.size() <= 16 && data.month.matches('^[0-9]{4}-[0-9]{2}$') &&
+        data.amount is number && data.amount > 0 &&
+        data.paymentType in ['electricity', 'rent', 'both', 'custom'] &&
+        data.method in ['bkash', 'nagad', 'rocket', 'bank', 'cash'] &&
+        (!('trxId' in data) || (data.trxId is string && data.trxId.size() <= 80)) &&
+        (!('senderPhone' in data) || (data.senderPhone is string && data.senderPhone.size() <= 40)) &&
+        (!('note' in data) || (data.note is string && data.note.size() <= 300)) &&
+        data.status in ['pending', 'approved'] &&
+        data.createdAt is string && data.createdAt.size() <= 40;
+    }
+
+    function isValidComplaint(data) {
+      return data.keys().hasAll([
+          'id', 'roomNo', 'tenantName', 'phone', 'category', 'priority',
+          'subject', 'message', 'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'roomNo', 'tenantName', 'phone', 'tenantUid', 'category', 'priority',
+          'subject', 'message', 'status', 'adminReply', 'repliedAt', 'createdAt', 'updatedAt'
+        ]) &&
+        isValidId(data.id) &&
+        data.roomNo is int && data.roomNo >= 0 && data.roomNo <= 35 &&
+        data.tenantName is string && data.tenantName.size() <= 120 &&
+        data.phone is string && data.phone.size() <= 40 &&
+        (!('tenantUid' in data) || (data.tenantUid is string && data.tenantUid.size() <= 128)) &&
+        data.category in ['electricity', 'water', 'repair', 'billing', 'cleanliness', 'other'] &&
+        data.priority in ['normal', 'urgent'] &&
+        data.subject is string && data.subject.size() <= 150 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 1000 &&
+        data.status in ['pending', 'in_progress', 'resolved'] &&
+        (!('adminReply' in data) || (data.adminReply is string && data.adminReply.size() <= 1000)) &&
+        (!('repliedAt' in data) || (data.repliedAt is string && data.repliedAt.size() <= 40)) &&
+        data.createdAt is string && data.createdAt.size() <= 40 &&
+        data.updatedAt is string && data.updatedAt.size() <= 40;
+    }
+
+    function isValidLoginApproval(data) {
+      return data.keys().hasAll(['id', 'roomNo', 'tenantName', 'phone', 'status', 'requestedAt', 'updatedAt']) &&
+        data.keys().hasOnly([
+          'id', 'roomNo', 'tenantName', 'phone', 'tenantUid', 'email',
+          'status', 'requestedAt', 'updatedAt', 'approvedBy'
+        ]) &&
+        isValidId(data.id) &&
+        data.roomNo is int && data.roomNo >= 1 && data.roomNo <= 35 &&
+        data.tenantName is string && data.tenantName.size() <= 120 &&
+        data.phone is string && data.phone.size() <= 40 &&
+        (!('tenantUid' in data) || (data.tenantUid is string && data.tenantUid.size() <= 128)) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 120)) &&
+        data.status in ['pending', 'approved', 'rejected'] &&
+        data.requestedAt is string && data.requestedAt.size() <= 40 &&
+        data.updatedAt is string && data.updatedAt.size() <= 40 &&
+        (!('approvedBy' in data) || (data.approvedBy is string && data.approvedBy.size() <= 100));
+    }
+
+    function isValidTenantUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'roomNo', 'approved', 'status', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'roomNo', 'phone', 'approved', 'status', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() <= 120 &&
+        data.displayName is string && data.displayName.size() <= 120 &&
+        data.roomNo is int && data.roomNo >= 1 && data.roomNo <= 35 &&
+        (!('phone' in data) || (data.phone is string && data.phone.size() <= 40)) &&
+        data.approved is bool &&
+        data.status in ['pending', 'approved', 'rejected'] &&
+        data.updatedAt is string && data.updatedAt.size() <= 40;
+    }
+
+    function isValidAdminDoc(data) {
+      return data.keys().hasAll(['uid', 'email', 'name', 'role', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'name', 'role', 'createdAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 &&
+        data.email is string && data.email.size() <= 120 &&
+        data.name is string && data.name.size() <= 80 &&
+        data.role == 'admin' &&
+        data.createdAt is string && data.createdAt.size() <= 40;
+    }
+
+    function isValidBackup(data) {
+      return data.keys().hasAll([
+          'id', 'label', 'createdByUid', 'createdAt', 'roomsCount', 'billsCount', 'sharedCount', 'snapshot'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'label', 'createdByUid', 'createdAt', 'roomsCount', 'billsCount', 'sharedCount', 'snapshot'
+        ]) &&
+        isValidId(data.id) &&
+        data.label is string && data.label.size() >= 1 && data.label.size() <= 120 &&
+        data.createdByUid is string && data.createdByUid.size() >= 1 && data.createdByUid.size() <= 128 &&
+        data.createdAt is string && data.createdAt.size() <= 40 &&
+        data.roomsCount is int && data.roomsCount >= 0 && data.roomsCount <= 100 &&
+        data.billsCount is int && data.billsCount >= 0 &&
+        data.sharedCount is int && data.sharedCount >= 0 &&
+        data.snapshot is map;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. Building Settings
+    match /buildings/{buildingId} {
+      allow get: if isValidId(buildingId) && (isAdmin() || (hasTenantProfile() && getTenantUser().approved == true));
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(buildingId) && isValidBuilding(incoming()) && isAdmin();
+      allow update: if isValidId(buildingId) && isValidBuilding(incoming()) && isAdmin();
+      allow delete: if isValidId(buildingId) && isAdmin();
+    }
+
+    // 2. Private Room Records (Rent, Phone, Rate, Notes) - Admin or Approved Room Tenant ONLY
+    match /rooms/{roomId} {
+      allow get: if isValidRoomId(roomId) && (isAdmin() || (resource != null && isApprovedTenantForRoom(existing().no)));
+      allow list: if isBootstrappedAdmin() || (isVerifiedUser() && existing().tenantUid == request.auth.uid);
+      allow create: if isValidRoomId(roomId) && isValidRoom(incoming()) && isAdmin();
+      allow update: if isValidRoomId(roomId) && isValidRoom(incoming()) && isAdmin();
+      allow delete: if isValidRoomId(roomId) && isAdmin();
+    }
+
+    // 3. De-identified Room Directory (Occupancy & Display Name ONLY - No Phone/Rent PII)
+    match /roomDirectory/{roomId} {
+      allow get: if isValidRoomId(roomId) && (isAdmin() || (hasTenantProfile() && getTenantUser().approved == true));
+      allow list: if isBootstrappedAdmin() || (hasTenantProfile() && getTenantUser().approved == true);
+      allow create: if isValidRoomId(roomId) && isValidRoomDirectory(incoming()) && isAdmin();
+      allow update: if isValidRoomId(roomId) && isValidRoomDirectory(incoming()) && isAdmin();
+      allow delete: if isValidRoomId(roomId) && isAdmin();
+    }
+
+    // 4. Dining Sub-Meter Readings
+    match /sharedMeters/{sharedId} {
+      allow get: if isValidId(sharedId) && (isAdmin() || (hasTenantProfile() && getTenantUser().approved == true));
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(sharedId) && isValidSharedMeter(incoming()) && isAdmin();
+      allow update: if isValidId(sharedId) && isValidSharedMeter(incoming()) && isAdmin();
+      allow delete: if isValidId(sharedId) && isAdmin();
+    }
+
+    // 5. Monthly Bills & Receipts (Admin or Approved Room Tenant ONLY)
+    match /bills/{billId} {
+      allow get: if isValidId(billId) && (isAdmin() || (resource != null && isApprovedTenantForRoom(existing().roomNo)));
+      allow list: if isBootstrappedAdmin() || (isVerifiedUser() && existing().tenantUid == request.auth.uid);
+      allow create: if isValidId(billId) && isValidBill(incoming()) && isAdmin();
+      allow update: if isValidId(billId) && isValidBill(incoming()) && isAdmin();
+      allow delete: if isValidId(billId) && isAdmin();
+    }
+
+    // 6. Payment Slips (Admin or Approved Tenant creating pending slip for own room)
+    match /payments/{paymentId} {
+      allow get: if isValidId(paymentId) && (
+        isAdmin() || (resource != null && isVerifiedUser() && existing().tenantUid == request.auth.uid && isApprovedTenantForRoom(existing().roomNo))
+      );
+      allow list: if isBootstrappedAdmin() || (isVerifiedUser() && existing().tenantUid == request.auth.uid);
+      allow create: if isValidId(paymentId) && isValidPayment(incoming()) && (
+        isAdmin() ||
+        (
+          isVerifiedUser() &&
+          incoming().tenantUid == request.auth.uid &&
+          incoming().status == 'pending' &&
+          isApprovedTenantForRoom(incoming().roomNo) &&
+          exists(/databases/$(database)/documents/rooms/$(incoming().roomId))
+        )
+      );
+      allow update: if isValidId(paymentId) && isValidPayment(incoming()) && isAdmin();
+      allow delete: if isValidId(paymentId) && isAdmin();
+    }
+
+    // 7. 24/7 Tenant Complaints & Help Requests
+    match /complaints/{complaintId} {
+      allow get: if isValidId(complaintId) && (
+        isAdmin() || (resource != null && isVerifiedUser() && existing().tenantUid == request.auth.uid)
+      );
+      allow list: if isBootstrappedAdmin() || (isVerifiedUser() && existing().tenantUid == request.auth.uid);
+      allow create: if isValidId(complaintId) && isValidComplaint(incoming()) && (
+        isAdmin() ||
+        (
+          isVerifiedUser() &&
+          incoming().tenantUid == request.auth.uid &&
+          incoming().status == 'pending' &&
+          isApprovedTenantForRoom(incoming().roomNo)
+        )
+      );
+      allow update: if isValidId(complaintId) && isValidComplaint(incoming()) && isAdmin();
+      allow delete: if isValidId(complaintId) && isAdmin();
+    }
+
+    // 8. Tenant Login Approvals
+    match /loginApprovals/{approvalId} {
+      allow get: if isValidId(approvalId) && (
+        isAdmin() || (resource != null && isVerifiedUser() && existing().tenantUid == request.auth.uid)
+      );
+      allow list: if isBootstrappedAdmin() || (isVerifiedUser() && existing().tenantUid == request.auth.uid);
+      allow create: if isValidId(approvalId) && isValidLoginApproval(incoming()) && (
+        isAdmin() ||
+        (isVerifiedUser() && incoming().tenantUid == request.auth.uid && incoming().status == 'pending')
+      );
+      allow update: if isValidId(approvalId) && isValidLoginApproval(incoming()) && (
+        isAdmin() ||
+        (
+          isVerifiedUser() &&
+          existing().tenantUid == request.auth.uid &&
+          incoming().tenantUid == existing().tenantUid &&
+          incoming().requestedAt == existing().requestedAt &&
+          existing().status == 'pending' &&
+          incoming().status == 'pending' &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['tenantName', 'phone', 'updatedAt'])
+        )
+      );
+      allow delete: if isValidId(approvalId) && isAdmin();
+    }
+
+    // 9. Tenant User Role & Room Binding
+    match /tenantUsers/{userId} {
+      allow get: if isValidId(userId) && (isAdmin() || (isVerifiedUser() && request.auth.uid == userId));
+      allow list: if isBootstrappedAdmin() || (isVerifiedUser() && existing().uid == request.auth.uid);
+      allow create: if isValidId(userId) && isValidTenantUser(incoming()) && (
+        isAdmin() ||
+        (
+          isVerifiedUser() &&
+          request.auth.uid == userId &&
+          incoming().uid == request.auth.uid &&
+          incoming().approved == false &&
+          incoming().status == 'pending'
+        )
+      );
+      allow update: if isValidId(userId) && isValidTenantUser(incoming()) && (
+        isAdmin() ||
+        (
+          isVerifiedUser() &&
+          request.auth.uid == userId &&
+          incoming().uid == existing().uid &&
+          incoming().email == existing().email &&
+          incoming().approved == existing().approved &&
+          incoming().status == existing().status &&
+          incoming().roomNo == existing().roomNo &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'phone', 'updatedAt'])
+        )
+      );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 10. Verified Admin Accounts
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isBootstrappedAdmin() || (isVerifiedUser() && request.auth.uid == userId));
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(userId) && isValidAdminDoc(incoming()) && isBootstrappedAdmin();
+      allow update: if isValidId(userId) && isValidAdminDoc(incoming()) && isBootstrappedAdmin();
+      allow delete: if isValidId(userId) && isBootstrappedAdmin();
+    }
+
+    // 11. Cloud Backup Snapshots (Admin ONLY)
+    match /backups/{backupId} {
+      allow get: if isValidId(backupId) && isAdmin();
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(backupId) && isValidBackup(incoming()) && isAdmin() && incoming().createdByUid == request.auth.uid;
+      allow update: if isValidId(backupId) && isValidBackup(incoming()) && isAdmin();
+      allow delete: if isValidId(backupId) && isAdmin();
+    }
+  }
+}

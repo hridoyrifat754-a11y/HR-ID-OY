@@ -1,0 +1,6 @@
+{
+  "name": "আলম খান বিল্ডিং — লাইভ ভাড়া ও ডাইনিং বিদ্যুৎ হিসাব",
+  "description": "কর্তৃপক্ষ হৃদয়। ২য়–৭ম তলার ৩৫টি রুমের সমন্বিত ভাড়া, ডাইনিং সাব-মিটার ও অনলাইন সুরক্ষিত লাইভ সিঙ্ক সফটওয়্যার।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

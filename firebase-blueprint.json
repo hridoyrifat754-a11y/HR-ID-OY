@@ -1,0 +1,264 @@
+{
+  "entities": {
+    "BuildingSettingsDoc": {
+      "title": "BuildingSettingsDoc",
+      "description": "Building metadata and landlord billing configuration for Alam Khan Building.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "buildingName": { "type": "string", "maxLength": 120 },
+        "buildingAddress": { "type": "string", "maxLength": 200 },
+        "landlordName": { "type": "string", "maxLength": 80 },
+        "landlordTitle": { "type": "string", "maxLength": 60 },
+        "landlordPhone": { "type": "string", "maxLength": 60 },
+        "bkashNumber": { "type": "string", "maxLength": 40 },
+        "nagadNumber": { "type": "string", "maxLength": 40 },
+        "defaultUnitRate": { "type": "number" },
+        "useBengaliDigits": { "type": "boolean" },
+        "ownerEmail": { "type": "string", "maxLength": 120 },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "buildingName", "landlordName", "landlordPhone", "defaultUnitRate", "useBengaliDigits"]
+    },
+    "RoomDoc": {
+      "title": "RoomDoc",
+      "description": "Private room record including tenant contact phone, monthly rent, and electricity rate.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 32, "pattern": "^room-[0-9]+$" },
+        "no": { "type": "number" },
+        "floor": { "type": "number" },
+        "name": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "rent": { "type": "number" },
+        "rate": { "type": "number" },
+        "isOccupied": { "type": "boolean" },
+        "notes": { "type": "string", "maxLength": 500 },
+        "tenantUid": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "no", "floor", "name", "phone", "rent", "rate", "isOccupied"]
+    },
+    "RoomDirectoryDoc": {
+      "title": "RoomDirectoryDoc",
+      "description": "De-identified room directory entry (tenant display name and occupancy only, zero PII phone/rent).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 32, "pattern": "^room-[0-9]+$" },
+        "no": { "type": "number" },
+        "floor": { "type": "number" },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "isOccupied": { "type": "boolean" },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "no", "floor", "displayName", "isOccupied"]
+    },
+    "SharedMeterDoc": {
+      "title": "SharedMeterDoc",
+      "description": "Shared dining sub-meter reading and split calculation across assigned rooms.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "groupIndex": { "type": "number" },
+        "groupName": { "type": "string", "maxLength": 120 },
+        "rooms": { "type": "array" },
+        "month": { "type": "string", "maxLength": 16, "pattern": "^[0-9]{4}-[0-9]{2}$" },
+        "prev": { "type": "number" },
+        "now": { "type": "number" },
+        "units": { "type": "number" },
+        "rate": { "type": "number" },
+        "amount": { "type": "number" },
+        "perRoomShare": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 40 },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "groupIndex", "groupName", "rooms", "month", "prev", "now", "units", "rate", "amount", "perRoomShare", "createdAt"]
+    },
+    "BillDoc": {
+      "title": "BillDoc",
+      "description": "Monthly rent and electricity bill receipt record for an individual room.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomId": { "type": "string", "maxLength": 32 },
+        "roomNo": { "type": "number" },
+        "floor": { "type": "number" },
+        "tenantName": { "type": "string", "maxLength": 120 },
+        "tenantPhone": { "type": "string", "maxLength": 40 },
+        "tenantUid": { "type": "string", "maxLength": 128 },
+        "month": { "type": "string", "maxLength": 16, "pattern": "^[0-9]{4}-[0-9]{2}$" },
+        "prev": { "type": "number" },
+        "now": { "type": "number" },
+        "units": { "type": "number" },
+        "rate": { "type": "number" },
+        "electricityCost": { "type": "number" },
+        "rent": { "type": "number" },
+        "sharedElectricity": { "type": "number" },
+        "other": { "type": "number" },
+        "note": { "type": "string", "maxLength": 200 },
+        "total": { "type": "number" },
+        "paid": { "type": "number" },
+        "due": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 40 },
+        "trxId": { "type": "string", "maxLength": 80 },
+        "unitGroupId": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "maxLength": 40 },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "roomId", "roomNo", "floor", "tenantName", "tenantPhone", "month", "prev", "now", "units", "rate", "electricityCost", "rent", "sharedElectricity", "other", "note", "total", "paid", "due", "createdAt"]
+    },
+    "PaymentDoc": {
+      "title": "PaymentDoc",
+      "description": "Tenant or admin submitted payment slip for rent or electricity bill.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomNo": { "type": "number" },
+        "roomId": { "type": "string", "maxLength": 32 },
+        "tenantName": { "type": "string", "maxLength": 120 },
+        "tenantUid": { "type": "string", "maxLength": 128 },
+        "month": { "type": "string", "maxLength": 16, "pattern": "^[0-9]{4}-[0-9]{2}$" },
+        "amount": { "type": "number" },
+        "paymentType": { "type": "string", "enum": ["electricity", "rent", "both", "custom"] },
+        "method": { "type": "string", "enum": ["bkash", "nagad", "rocket", "bank", "cash"] },
+        "trxId": { "type": "string", "maxLength": 80 },
+        "senderPhone": { "type": "string", "maxLength": 40 },
+        "note": { "type": "string", "maxLength": 300 },
+        "status": { "type": "string", "enum": ["pending", "approved"] },
+        "createdAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "roomNo", "roomId", "tenantName", "month", "amount", "paymentType", "method", "status", "createdAt"]
+    },
+    "ComplaintDoc": {
+      "title": "ComplaintDoc",
+      "description": "24/7 tenant help request or complaint and admin reply.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomNo": { "type": "number" },
+        "tenantName": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "tenantUid": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "enum": ["electricity", "water", "repair", "billing", "cleanliness", "other"] },
+        "priority": { "type": "string", "enum": ["normal", "urgent"] },
+        "subject": { "type": "string", "maxLength": 150 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "resolved"] },
+        "adminReply": { "type": "string", "maxLength": 1000 },
+        "repliedAt": { "type": "string", "maxLength": 40 },
+        "createdAt": { "type": "string", "maxLength": 40 },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["id", "roomNo", "tenantName", "phone", "category", "priority", "subject", "message", "status", "createdAt", "updatedAt"]
+    },
+    "LoginApprovalDoc": {
+      "title": "LoginApprovalDoc",
+      "description": "Admin approval record controlling tenant login access per room.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "roomNo": { "type": "number" },
+        "tenantName": { "type": "string", "maxLength": 120 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "tenantUid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "requestedAt": { "type": "string", "maxLength": 40 },
+        "updatedAt": { "type": "string", "maxLength": 40 },
+        "approvedBy": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "roomNo", "tenantName", "phone", "status", "requestedAt", "updatedAt"]
+    },
+    "TenantUserDoc": {
+      "title": "TenantUserDoc",
+      "description": "Authenticated user role and room binding verified by the Admin.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 120 },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "roomNo": { "type": "number" },
+        "phone": { "type": "string", "maxLength": 40 },
+        "approved": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "updatedAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["uid", "email", "displayName", "roomNo", "approved", "status", "updatedAt"]
+    },
+    "AdminDoc": {
+      "title": "AdminDoc",
+      "description": "Verified administrator account record.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 120 },
+        "name": { "type": "string", "maxLength": 80 },
+        "role": { "type": "string", "enum": ["admin"] },
+        "createdAt": { "type": "string", "maxLength": 40 }
+      },
+      "required": ["uid", "email", "name", "role", "createdAt"]
+    },
+    "BackupSnapshotDoc": {
+      "title": "BackupSnapshotDoc",
+      "description": "Cloud backup snapshot saved by Admin for instant point-in-time restore.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "label": { "type": "string", "maxLength": 120 },
+        "createdByUid": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 40 },
+        "roomsCount": { "type": "number" },
+        "billsCount": { "type": "number" },
+        "sharedCount": { "type": "number" },
+        "snapshot": { "type": "object" }
+      },
+      "required": ["id", "label", "createdByUid", "createdAt", "roomsCount", "billsCount", "sharedCount", "snapshot"]
+    }
+  },
+  "firestore": {
+    "/buildings/{buildingId}": {
+      "schema": { "$ref": "#/entities/BuildingSettingsDoc" },
+      "description": "Building metadata and landlord billing configuration."
+    },
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/RoomDoc" },
+      "description": "Private room records with rent, phone numbers, rates, and notes (Admin or approved room tenant only)."
+    },
+    "/roomDirectory/{roomId}": {
+      "schema": { "$ref": "#/entities/RoomDirectoryDoc" },
+      "description": "Public room name and occupancy directory without PII phone or rent."
+    },
+    "/sharedMeters/{sharedId}": {
+      "schema": { "$ref": "#/entities/SharedMeterDoc" },
+      "description": "Dining sub-meter readings and equal split calculations."
+    },
+    "/bills/{billId}": {
+      "schema": { "$ref": "#/entities/BillDoc" },
+      "description": "Monthly rent and electricity bills."
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentDoc" },
+      "description": "Payment slips submitted for monthly bills."
+    },
+    "/complaints/{complaintId}": {
+      "schema": { "$ref": "#/entities/ComplaintDoc" },
+      "description": "24/7 tenant help requests and complaints."
+    },
+    "/loginApprovals/{approvalId}": {
+      "schema": { "$ref": "#/entities/LoginApprovalDoc" },
+      "description": "Admin approval entries for room login."
+    },
+    "/tenantUsers/{userId}": {
+      "schema": { "$ref": "#/entities/TenantUserDoc" },
+      "description": "Authenticated user role and approved room mapping."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminDoc" },
+      "description": "Explicit administrator accounts."
+    },
+    "/backups/{backupId}": {
+      "schema": { "$ref": "#/entities/BackupSnapshotDoc" },
+      "description": "Admin cloud backup snapshots for point-in-time restore."
+    }
+  }
+}

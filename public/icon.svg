@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- App Background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  
+  <!-- Subtle Grid lines -->
+  <rect x="76" y="76" width="360" height="360" rx="24" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.1" stroke-width="2"/>
+  
+  <!-- Building Silhouette -->
+  <!-- Main Tower (Floors 2 to 7) -->
+  <rect x="136" y="120" width="240" height="280" rx="12" fill="url(#accent)"/>
+  
+  <!-- Rooftop / 7th floor penthouse -->
+  <rect x="196" y="80" width="120" height="40" rx="6" fill="#60a5fa"/>
+  <rect x="246" y="56" width="20" height="24" fill="#93c5fd"/>
+  
+  <!-- Windows Grid representing 35 rooms -->
+  <!-- Floor 6 (8 rooms) -->
+  <rect x="156" y="140" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="200" y="140" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="280" y="140" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="324" y="140" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  
+  <!-- Floor 5 -->
+  <rect x="156" y="176" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="200" y="176" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="280" y="176" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="324" y="176" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+
+  <!-- Floor 4 -->
+  <rect x="156" y="212" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="200" y="212" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="280" y="212" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="324" y="212" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+
+  <!-- Floor 3 -->
+  <rect x="156" y="248" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="200" y="248" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="280" y="248" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+  <rect x="324" y="248" width="32" height="24" rx="4" fill="#ffffff" fill-opacity="0.9"/>
+
+  <!-- Entrance Door -->
+  <rect x="236" y="324" width="40" height="76" rx="4" fill="#0f172a"/>
+
+  <!-- Electricity Meter Badge overlay on bottom right -->
+  <circle cx="360" cy="360" r="76" fill="#0f172a" stroke="#f59e0b" stroke-width="8"/>
+  <circle cx="360" cy="360" r="64" fill="#1e293b"/>
+  <!-- Lightning Bolt -->
+  <path d="M366 312 L334 358 L360 358 L348 408 L386 352 L360 352 Z" fill="url(#bolt)"/>
+
+  <!-- 35 Rooms Badge on top left -->
+  <rect x="76" y="80" width="104" height="42" rx="10" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+  <text x="128" y="108" font-family="system-ui, sans-serif" font-size="22" font-weight="900" fill="#0f172a" text-anchor="middle">৩৫ রুম</text>
+</svg>
